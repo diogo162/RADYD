@@ -1,56 +1,60 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.InetAddress;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FileServer {
-    private static List<ClientHandler> clients = new ArrayList<>();
+    private static Set<PrintWriter> writers = new HashSet<>();
 
     public static void main(String[] args) {
         int port = 1234;
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server started on " + InetAddress.getLocalHost().getHostName() + " at port " + port);
+            System.out.println("Server listening on port " + port);
             while (true) {
                 Socket socket = serverSocket.accept();
-                System.out.println("Client connected from " + socket.getInetAddress().getHostName());
-                ClientHandler client = new ClientHandler(socket);
-                clients.add(client);
-                new Thread(client).start();
+                new Thread(new Handler(socket)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private static class ClientHandler implements Runnable {
+    private static class Handler implements Runnable {
         private Socket socket;
-        private String username;
-        private PrintWriter writer;
-    
-        public ClientHandler(Socket socket) {
+
+        public Handler(Socket socket) {
             this.socket = socket;
-            try {
-                this.writer = new PrintWriter(socket.getOutputStream(), true);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-    
+
         @Override
         public void run() {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-                writer.println("Enter your username:");
-                username = reader.readLine();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                 PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)) {
+                writers.add(writer);
                 String message;
                 while ((message = reader.readLine()) != null) {
-                    for (ClientHandler client : clients) {
-                        if (client != this) {
-                            client.sendMessage(username + ": " + message);
+                    if (message.startsWith("/sendfile")) {
+                        String[] parts = message.split(" ");
+                        if (parts.length == 2) {
+                            String filename = parts[1];
+                            InputStream inputStream = socket.getInputStream();
+                            DataInputStream dataInputStream = new DataInputStream(inputStream);
+                            int length = dataInputStream.readInt();
+                            byte[] fileContent = new byte[length];
+                            dataInputStream.readFully(fileContent);
+                            Path path = Paths.get(filename);
+                            Files.write(path, fileContent);
+                            for (PrintWriter w : writers) {
+                                w.println("File received: " + filename);
+                            }
+                        }
+                    } else {
+                        for (PrintWriter w : writers) {
+                            w.println(message);
                         }
                     }
                 }
@@ -64,10 +68,5 @@ public class FileServer {
                 }
             }
         }
-    
-        public void sendMessage(String message) {
-            writer.println(message);
-        }
     }
-    
 }

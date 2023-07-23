@@ -1,8 +1,8 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class FileClient {
     public static void main(String[] args) {
@@ -16,7 +16,27 @@ public class FileClient {
             BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
             String message;
             while ((message = stdIn.readLine()) != null) {
-                writer.println(message);
+                if (message.startsWith("/sendfile")) {
+                    String[] parts = message.split(" ");
+                    if (parts.length == 2) {
+                        String filename = parts[1];
+                        Path path = Paths.get(filename);
+                        if (Files.exists(path)) {
+                            writer.println("/sendfile " + path.getFileName());
+                            byte[] fileContent = Files.readAllBytes(path);
+                            OutputStream outputStream = socket.getOutputStream();
+                            DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+                            dataOutputStream.writeInt(fileContent.length);
+                            dataOutputStream.write(fileContent);
+                        } else {
+                            System.out.println("File not found: " + filename);
+                        }
+                    } else {
+                        System.out.println("Usage: /sendfile <filename>");
+                    }
+                } else {
+                    writer.println(message);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
