@@ -27,12 +27,10 @@ public class FileClient {
                 groupName = DEFAULT_GROUP;
             }
 
-            System.out.println("Client '" + clientName + "' listening on group '" + groupName + "' and port " + MULTICAST_PORT);
-
             new Thread(new ClientHandler()).start();
 
             while (true) {
-                byte[] buf = new byte[1024];
+                byte[] buf = new byte[8196];
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 multicastSocket.receive(packet);
 
@@ -65,14 +63,14 @@ public class FileClient {
 
     private static void receiveFile(InetAddress senderAddress, String fileName) {
         try {
-            byte[] buf = new byte[1024];
+            byte[] buf = new byte[8196];
             DatagramPacket filePacket = new DatagramPacket(buf, buf.length);
             multicastSocket.receive(filePacket);
 
             String savePath = "./received_files/" + fileName;
             File receivedDir = new File("./received_files");
             if (!receivedDir.exists()) {
-                receivedDir.mkdirs(); // Create the directory if it doesn't exist
+                receivedDir.mkdirs();
             }
 
             try (FileOutputStream fileOutputStream = new FileOutputStream(savePath)) {
@@ -91,11 +89,13 @@ public class FileClient {
         @Override
         public void run() {
             try {
+                joinedGroup();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
                 while (true) {
                     String message = reader.readLine();
 
-                    if (message.equalsIgnoreCase("exit")) {
+                    if (message.equalsIgnoreCase("/exit")) {
+                        leftGroup();
                         leaveCurrentGroup();
                         System.out.print("Enter the group you want to join (press Enter for default group 'General'): ");
                         groupName = reader.readLine().trim();
@@ -103,15 +103,14 @@ public class FileClient {
                             groupName = DEFAULT_GROUP;
                         }
                         joinNewGroup();
+                        joinedGroup();
                     } else if (message.startsWith("sendfile")) {
-                        // Format: sendfile <receiver_name> <file_path>
-                        String[] parts = message.split(" ", 3);
-                        if (parts.length == 3) {
-                            String receiverName = parts[1];
-                            String filePath = parts[2];
-                            sendFile(receiverName, filePath);
+                        String[] parts = message.split(" ", 2);
+                        if (parts.length == 2) {
+                            String filePath = parts[1];
+                            sendFile(filePath);
                         } else {
-                            System.out.println("Invalid command. Usage: sendfile <receiver_name> <file_path>");
+                            System.out.println("Invalid command. Usage: sendfile <file_path>");
                         }
                     } else {
                         byte[] buf = (clientName + ":" + groupName + ":" + message).getBytes();
@@ -126,19 +125,32 @@ public class FileClient {
         }
 
         private void leaveCurrentGroup() throws IOException {
-            // Leave the current group
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             multicastSocket.leaveGroup(group);
         }
 
         private void joinNewGroup() throws IOException {
-            // Join the new group
             InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
             multicastSocket.joinGroup(group);
         }
 
-        private void sendFile(String receiverName, String filePath) throws IOException {
-            // Read the file and send it to the receiver
+        private void joinedGroup() throws IOException {
+            System.out.println("Client '" + clientName + "' listening on group " + groupName);
+            byte[] buf = (clientName + ":" + groupName + ":" + "joined the group").getBytes();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            DatagramPacket packet = new DatagramPacket(buf, buf.length, group, MULTICAST_PORT);
+            multicastSocket.send(packet);        
+        }
+
+        private void leftGroup() throws IOException {
+            byte[] buf = (clientName + ":" + groupName + ":" + "left the group").getBytes();
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
+            DatagramPacket packet = new DatagramPacket(buf, buf.length, group, MULTICAST_PORT);
+            multicastSocket.send(packet);        
+        }
+
+
+        private void sendFile(String filePath) throws IOException {
             File file = new File(filePath);
             if (!file.exists() || !file.isFile()) {
                 System.out.println("File not found: " + filePath);
@@ -155,7 +167,7 @@ public class FileClient {
                 }
 
                 byte[] fileData = byteArrayOutputStream.toByteArray();
-                byte[] buf = (clientName + ":" + groupName + ":<<file>>" + receiverName + ":" + file.getName()).getBytes();
+                byte[] buf = (clientName + ":" + groupName + ":<<file>>" + ":" + file.getName()).getBytes();
                 InetAddress group = InetAddress.getByName(MULTICAST_ADDRESS);
                 DatagramPacket packet = new DatagramPacket(buf, buf.length, group, MULTICAST_PORT);
                 multicastSocket.send(packet);
