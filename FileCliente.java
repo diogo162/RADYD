@@ -104,13 +104,13 @@ public class FileCliente {
                         }
                         EntrarNovoGrupo();
                         EntrouNoGrupoMensagem();
-                    } else if (mensagem.startsWith("/enviararquivo")) {
+                    } else if (mensagem.startsWith("/compartilhar")) {
                         String[] partes = mensagem.split(" ", 2);
                         if (partes.length == 2) {
                             String caminhoArquivo = partes[1];
                             EnviarArquivo(caminhoArquivo);
                         } else {
-                            System.out.println("Comando inválido. Uso: /enviararquivo <caminho_arquivo>");
+                            System.out.println("Comando inválido. Uso: /compartilhar <caminho_arquivo>");
                         }
                     } else {
                         byte[] buffer = (nomeCliente + ":" + nomeGrupo + ":" + mensagem).getBytes();
