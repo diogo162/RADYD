@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
-public class FileCliente {
+public class FileClient {
     private static final int PORTA_MULTICAST = 1234;
     private static final String ENDERECO_MULTICAST = "239.255.255.250";
     private static final String GRUPO_PADRAO = "Geral";
@@ -34,6 +34,7 @@ public class FileCliente {
                 DatagramPacket pacote = new DatagramPacket(buffer, buffer.length);
                 multicastSocket.receive(pacote);
 
+
                 String mensagem = new String(pacote.getData(), 0, pacote.getLength());
                 String[] partes = mensagem.split(":", 3);
 
@@ -47,7 +48,7 @@ public class FileCliente {
                             if (partesArquivo.length == 2) {
                                 String nomeArquivo = partesArquivo[1].trim();
                                 System.out.println(nomeRemetente + " enviou um arquivo: " + nomeArquivo);
-                                receberArquivo(pacote.getAddress(), nomeArquivo);
+                                receberArquivo(nomeArquivo);
                             }
                         } else {
                             System.out.println(nomeRemetente + ": " + mensagemRemetente);
@@ -60,7 +61,7 @@ public class FileCliente {
         }
     }
 
-    private static void receberArquivo(InetAddress enderecoRemetente, String nomeArquivo) {
+    private static void receberArquivo(String nomeArquivo) {
         try {
             byte[] buf = new byte[8196];
             DatagramPacket pacoteArquivo = new DatagramPacket(buf, buf.length);
