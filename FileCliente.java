@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
-public class FileClient {
+public class FileCliente {
     private static final int PORTA_MULTICAST = 1234;
     private static final String ENDERECO_MULTICAST = "239.255.255.250";
     private static final String GRUPO_PADRAO = "Geral";
