@@ -6,11 +6,10 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.UnknownHostException;
 
 public class metodos implements contrato{
     
-    
+
     public void SairDoGrupoAtual(MulticastSocket multicastSocket, String ENDERECO_MULTICAST) throws IOException {
         InetAddress grupo = InetAddress.getByName(ENDERECO_MULTICAST);
         multicastSocket.leaveGroup(grupo);
@@ -21,41 +20,23 @@ public class metodos implements contrato{
             multicastSocket.joinGroup(grupo);
     }
 
-    public void EntrouNoGrupoMensagem(MulticastSocket multicastSocket, String ENDERECO_MULTICAST, String nomeCliente, String nomeGrupo, int PORTA_MULTICAST) {
+    public void EntrouNoGrupoMensagem(MulticastSocket multicastSocket, String ENDERECO_MULTICAST, String nomeCliente, String nomeGrupo, int PORTA_MULTICAST) throws IOException {
         System.out.println("Cliente '" + nomeCliente + "' entrou no grupo " + nomeGrupo);
         byte[] buffer = (nomeCliente + ":" + nomeGrupo + ":" + "entrou no grupo").getBytes();
-        InetAddress grupo;
-        try {
-            grupo = InetAddress.getByName(ENDERECO_MULTICAST);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+        InetAddress grupo = InetAddress.getByName(ENDERECO_MULTICAST);
         DatagramPacket pacote = new DatagramPacket(buffer, buffer.length, grupo, PORTA_MULTICAST);
-        try {
-            multicastSocket.send(pacote);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }        
+        multicastSocket.send(pacote);        
     }
 
-    public void SaiuDoGrupoMensagem(MulticastSocket multicastSocket, String ENDERECO_MULTICAST, String nomeCliente, String nomeGrupo, int PORTA_MULTICAST) {
+    public void SaiuDoGrupoMensagem(MulticastSocket multicastSocket, String ENDERECO_MULTICAST, String nomeCliente, String nomeGrupo, int PORTA_MULTICAST) throws IOException {
         byte[] buffer = (nomeCliente + ":" + nomeGrupo + ":" + "saiu do grupo").getBytes();
-        InetAddress grupo;
-        try {
-            grupo = InetAddress.getByName(ENDERECO_MULTICAST);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+        InetAddress grupo = InetAddress.getByName(ENDERECO_MULTICAST);
         DatagramPacket pacote = new DatagramPacket(buffer, buffer.length, grupo, PORTA_MULTICAST);
-        try {
-            multicastSocket.send(pacote);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }        
+        multicastSocket.send(pacote);        
     }
 
 
-    public void EnviarArquivo(MulticastSocket multicastSocket, String ENDERECO_MULTICAST, String nomeCliente, String nomeGrupo, int PORTA_MULTICAST, String caminhoArquivo) {
+    public void EnviarArquivo(MulticastSocket multicastSocket, String ENDERECO_MULTICAST, String nomeCliente, String nomeGrupo, int PORTA_MULTICAST, String caminhoArquivo) throws IOException {
         File arquivo = new File(caminhoArquivo);
         if (!arquivo.exists() || !arquivo.isFile()) {
             System.out.println("Arquivo não encontrado: " + caminhoArquivo);
