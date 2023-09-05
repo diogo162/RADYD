@@ -12,15 +12,39 @@ public class FileCliente {
     private static String nomeGrupo;
 
     public static void main(String[] args) {
+<<<<<<< Updated upstream
+=======
+        conta.carregarContas();
+>>>>>>> Stashed changes
         try {
             multicastSocket = new MulticastSocket(PORTA_MULTICAST);
             InetAddress grupo = InetAddress.getByName(ENDERECO_MULTICAST);
             multicastSocket.joinGroup(grupo);
+<<<<<<< Updated upstream
 
             System.out.print("Digite seu nome: ");
             Scanner scanner = new Scanner(System.in);
             nomeCliente = scanner.nextLine();
 
+=======
+            final Scanner scanner = new Scanner(System.in);
+
+            System.out.print("Criar uma nova conta? (S/N): ");
+            String resposta = scanner.nextLine();
+            if (resposta.equalsIgnoreCase("S")) {
+                conta.criarNovaConta();
+                conta.salvarContas();
+            }
+
+            System.out.print("Digite seu nome de usuário: ");
+            nomeCliente = scanner.nextLine();
+
+            if (!conta.fazerLogin(nomeCliente)) {
+                System.out.println("Login falhou. Verifique seu nome de usuário e senha.");
+                return;
+            }
+
+>>>>>>> Stashed changes
             System.out.print("Digite o grupo que deseja entrar (pressione Enter para o grupo padrão 'Geral'): ");
             nomeGrupo = scanner.nextLine();
             if (nomeGrupo.trim().isEmpty()) {
@@ -61,6 +85,10 @@ public class FileCliente {
         }
     }
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
     private static void receberArquivo(String nomeArquivo) {
         try {
             byte[] buf = new byte[8196];
